@@ -7,7 +7,7 @@ var r1, r2;
 ipc.config.id   = 'board';
 ipc.config.retry = 1500;
 
-/*ipc.connectTo(
+ipc.connectTo(
     'world',
     function(){
         ipc.of.world.on(
@@ -26,17 +26,8 @@ ipc.config.retry = 1500;
                 ipc.log('disconnected from world'.notice);
             }
         );
-        ipc.of.world.on(
-            'message',  //any event or message type your server listens for
-            function(data){
-		if (r1){
-			r1.toggle();
-		}
-                ipc.log('got a message from world : '.debug, data);
-            }
-        );
     }
-);*/
+);
 
 var to = -1;
 
@@ -52,6 +43,17 @@ board.on("ready", function() {
   r1 = new five.Relay(11);
   r2 = new five.Relay(10);
   
+  ipc.of.world.on(
+      'message',  //any event or message type your server listens for
+      (data) => {
+          console.log('message', data)
+          if (r1){
+            r1.toggle();
+          }
+          ipc.log('got a message from world : '.debug, data);
+      }
+  );
+
   var col0 = new five.Button({
     pin:5,
     isPullup: true,
