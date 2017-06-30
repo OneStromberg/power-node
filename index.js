@@ -20,7 +20,7 @@ board.on("ready", function() {
                   ipc.log('## connected to world ##'.rainbow, ipc.config.delay);
                   ipc.of.world.emit(
                       'message',  //any event or message type your server listens for
-                      'hello'
+                      {node:ipc.config.id, status:'ready'}
                   )
               }
           );
@@ -35,7 +35,7 @@ board.on("ready", function() {
               (data) => {
                   console.log('message', data)
                   r1.toggle();
-                  ipc.log('got a message from world : '.debug, data);
+                  //ipc.log('got a message from world : '.debug, data);
               }
           );
       }
