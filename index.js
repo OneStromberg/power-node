@@ -7,38 +7,6 @@ var r1, r2;
 ipc.config.id   = 'board';
 ipc.config.retry = 1500;
 
-ipc.connectTo(
-    'world',
-    function(){
-        ipc.of.world.on(
-            'connect',
-            function(){
-                ipc.log('## connected to world ##'.rainbow, ipc.config.delay);
-                ipc.of.world.emit(
-                    'message',  //any event or message type your server listens for
-                    'hello'
-                )
-            }
-        );
-        ipc.of.world.on(
-           'disconnect',
-            function(){
-                ipc.log('disconnected from world'.notice);
-            }
-        );
-        ipc.of.world.on(
-            'message',  //any event or message type your server listens for
-            (data) => {
-                console.log('message', data, r1)
-                if (r1){
-                  r1.toggle();
-                }
-                ipc.log('got a message from world : '.debug, data);
-            }
-        );
-    }
-);
-
 var to = -1;
 
 var _autoWatering = (flag, callback) => {
@@ -50,6 +18,39 @@ var _autoWatering = (flag, callback) => {
 }
 
 board.on("ready", function() {
+
+  ipc.connectTo(
+      'world',
+      function(){
+          ipc.of.world.on(
+              'connect',
+              function(){
+                  ipc.log('## connected to world ##'.rainbow, ipc.config.delay);
+                  ipc.of.world.emit(
+                      'message',  //any event or message type your server listens for
+                      'hello'
+                  )
+              }
+          );
+          ipc.of.world.on(
+            'disconnect',
+              function(){
+                  ipc.log('disconnected from world'.notice);
+              }
+          );
+          ipc.of.world.on(
+              'message',  //any event or message type your server listens for
+              (data) => {
+                  console.log('message', data, r1)
+                  if (r1){
+                    r1.toggle();
+                  }
+                  ipc.log('got a message from world : '.debug, data);
+              }
+          );
+      }
+  );
+
   r1 = new five.Relay(11);
   r2 = new five.Relay(10);
 
