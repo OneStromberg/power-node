@@ -26,6 +26,16 @@ ipc.connectTo(
                 ipc.log('disconnected from world'.notice);
             }
         );
+        ipc.of.world.on(
+            'message',  //any event or message type your server listens for
+            (data) => {
+                console.log('message', data, r1)
+                if (r1){
+                  r1.toggle();
+                }
+                ipc.log('got a message from world : '.debug, data);
+            }
+        );
     }
 );
 
@@ -42,17 +52,6 @@ var _autoWatering = (flag, callback) => {
 board.on("ready", function() {
   r1 = new five.Relay(11);
   r2 = new five.Relay(10);
-  
-  ipc.of.world.on(
-      'message',  //any event or message type your server listens for
-      (data) => {
-          console.log('message', data)
-          if (r1){
-            r1.toggle();
-          }
-          ipc.log('got a message from world : '.debug, data);
-      }
-  );
 
   var col0 = new five.Button({
     pin:5,
