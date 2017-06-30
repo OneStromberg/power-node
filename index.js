@@ -2,14 +2,71 @@ var five = require("johnny-five");
 var board = new five.Board({repl:false});
 var ipc = require('node-ipc');
 
-var r1, r2;
-
 ipc.config.id   = 'board';
 ipc.config.retry = 1500;
 
+//Atomatization call builds on query
 var to = -1;
+var auto = function(value, element){
+
+  const _auto = (iterator, callback) => {
+    clearTimeout(to);
+    var t = value[iterator % value.length];
+    to = setTimeout(()=> {
+      callback(t > 0);
+      _auto(++iterator, callback);
+    }, Math.abs(parseInt(t)));
+  }
+
+  if (value){
+    clearTimeout(to);
+    _auto(0, (v) => {
+      element.modificator(v);
+    });
+  } else {
+      console.log('auto', value, to);
+    clearTimeout(to);
+    to = 1;
+  }
+}
+
+const message = (type, payload = null) => {
+    return {
+        node: ipc.config.id,
+        type: type,
+        payload: payload
+    }
+}
+
+const buildElement = (element, modificator) => {
+  return {element, modificator}
+}
+
+const buildReleyElement = (r) => {
+  return buildElement(r, (value) => {
+      ipc.of.world.emit(
+          'message',  //any event or message type your server listens for
+          message('api', {pin:r.pin, value: value})
+      )
+      if (r){
+        if (value){
+          r.on();
+        } else {
+          r.off();
+        }
+      }
+  });
+}
 
 board.on("ready", function() {
+
+  const r1 = new five.Relay(11);
+  const r2 = new five.Relay(10);
+
+  const interface = {}
+  interface['r1'] = buildReleyElement(r1);
+  interface['r2'] = buildReleyElement(r2);
+  interface['autoWatering'] = buildElement(null, (value) => auto(value, buildReleyElement(r1)))
 
   ipc.connectTo(
       'world',
@@ -20,7 +77,7 @@ board.on("ready", function() {
                   ipc.log('## connected to world ##'.rainbow, ipc.config.delay);
                   ipc.of.world.emit(
                       'message',  //any event or message type your server listens for
-                      {node:ipc.config.id, status:'ready'}
+                      message('connect')
                   )
               }
           );
@@ -33,16 +90,16 @@ board.on("ready", function() {
           ipc.of.world.on(
               'message',  //any event or message type your server listens for
               (data) => {
-                  console.log('message', data)
-                  r1.toggle();
-                  //ipc.log('got a message from world : '.debug, data);
+                  if (data.node == "api" && data.type == "board"){
+                    var el = interface[data.payload.key];
+                    if (el){
+                      el.modificator(data.payload.value);
+                    }
+                  }
               }
           );
       }
   );
-
-  r1 = new five.Relay(11);
-  r2 = new five.Relay(10);
 
   var col0 = new five.Button({
     pin:5,
@@ -52,29 +109,6 @@ board.on("ready", function() {
   
   const led = new five.Led(13);
   led.off();
-
-  var autoWatering = function(){
-
-    const _autoWatering = (flag, callback) => {
-      clearTimeout(to);
-      to = setTimeout(()=> {
-        callback(flag);
-        _autoWatering(!flag, callback);
-      }, flag ? 20 * 1000 * 60 : 3 * 1000 * 60);
-    }
-
-    const callback = (value) => {
-      value ? r2.on() : r2.off();
-    };
-
-    if (to == -1){
-      led.on();
-      _autoWatering(true, callback);
-    } else {
-      led.off();
-      clearInterval(to);
-    }
-  }
 
   var col1 = new five.Button({
     pin:4,
@@ -95,13 +129,12 @@ board.on("ready", function() {
   });
 
   buttons.on("down", function(e) {
-    if( e.pin == 4){
+    if(e.pin == 4){
       r1.toggle()
     } else if (e.pin == 5) {
       r2.toggle();
     } else if (e.pin == 3) {
-      autoWatering()
+      auto([-20 * 1000 * 60, 3 * 1000 * 60],  buildReleyElement(r1))
     }
   });
-
 });
