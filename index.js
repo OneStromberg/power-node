@@ -9,14 +9,6 @@ ipc.config.retry = 1500;
 
 var to = -1;
 
-var _autoWatering = (flag, callback) => {
-  clearTimeout(to);
-  to = setTimeout(()=> {
-    callback(flag);
-    _autoWatering(!flag, callback);
-  }, flag ? 20 * 1000 * 60 : 3 * 1000 * 60);
-}
-
 board.on("ready", function() {
 
   ipc.connectTo(
@@ -41,10 +33,8 @@ board.on("ready", function() {
           ipc.of.world.on(
               'message',  //any event or message type your server listens for
               (data) => {
-                  console.log('message', data, r1)
-                  if (r1){
-                    r1.toggle();
-                  }
+                  console.log('message', data)
+                  r1.toggle();
                   ipc.log('got a message from world : '.debug, data);
               }
           );
@@ -60,18 +50,29 @@ board.on("ready", function() {
     invert: true
   });
   
-  var led = new five.Led(13);
+  const led = new five.Led(13);
   led.off();
 
-  var autoWatering = function(callback){
-    if (callback) {
-      if (to == -1){
-        led.on();
-        _autoWatering(true, callback);
-      } else {
-        led.off();
-        clearInterval(to);
-      }
+  var autoWatering = function(){
+
+    const _autoWatering = (flag, callback) => {
+      clearTimeout(to);
+      to = setTimeout(()=> {
+        callback(flag);
+        _autoWatering(!flag, callback);
+      }, flag ? 20 * 1000 * 60 : 3 * 1000 * 60);
+    }
+
+    const callback = (value) => {
+      value ? r2.on() : r2.off();
+    };
+
+    if (to == -1){
+      led.on();
+      _autoWatering(true, callback);
+    } else {
+      led.off();
+      clearInterval(to);
     }
   }
 
@@ -99,9 +100,7 @@ board.on("ready", function() {
     } else if (e.pin == 5) {
       r2.toggle();
     } else if (e.pin == 3) {
-      autoWatering((value) => {
-        value ? r2.on() : r2.off();
-      })
+      autoWatering()
     }
   });
 
