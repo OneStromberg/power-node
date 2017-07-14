@@ -43,10 +43,7 @@ const buildElement = (element, modificator) => {
 
 const buildReleyElement = (relay) => {
   return buildElement(relay, (value) => {
-      ipc.of.world.emit(
-          'message',  //any event or message type your server listens for
-          message('api', {pin:relay.pin, value: value})
-      )
+      ipc.of.world.emit('message', message('api', {pin:relay.pin, value: value}));
       if (relay){
         if (value){
           relay.on();
