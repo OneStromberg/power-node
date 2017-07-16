@@ -2,10 +2,6 @@ var five = require("johnny-five");
 var board = new five.Board({repl:false});
 var CronJob = require('cron').CronJob;
 
-new CronJob('0 */15 * * * *', () => {
-  console.log('every 15 what?')
-}, ()=>{}, true);
-
 const onBoardHandler = () => {
 
   const r1 = new five.Relay(11);
@@ -14,7 +10,7 @@ const onBoardHandler = () => {
   var waterJob = new CronJob('0 */15 * * * *', () => {
       r1.on();
       setTimeout(() => {
-        r2.off();
+        r1.off();
       }, 3 * 1000 * 60);
     }, () => {
       r1.off();
