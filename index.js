@@ -15,7 +15,7 @@ const onBoardHandler = () => {
       r1.on();
       setTimeout(() => {
         r2.off();
-      }, 3 * 1000);
+      }, 3 * 1000 * 60);
     }, () => {
       r1.off();
     },
